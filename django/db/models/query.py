@@ -17,7 +17,7 @@ from django.db import (
 )
 from django.db.models import DateField, DateTimeField, sql
 from django.db.models.constants import LOOKUP_SEP
-from django.db.models.deletion import Collector
+from django.db.models.deletion import Collector, get_required_fields
 from django.db.models.expressions import Case, Expression, F, Value, When
 from django.db.models.fields import AutoField
 from django.db.models.functions import Cast, Trunc
@@ -694,6 +694,7 @@ class QuerySet:
         del_query.query.select_for_update = False
         del_query.query.select_related = False
         del_query.query.clear_ordering(force_empty=True)
+        del_query = del_query.only(*get_required_fields(self.model))
 
         collector = Collector(using=del_query.db)
         collector.collect(del_query)

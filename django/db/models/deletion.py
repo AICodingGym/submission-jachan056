@@ -60,6 +60,18 @@ def get_candidate_relations_to_delete(opts):
     )
 
 
+def get_required_fields(model):
+    opts = model._meta
+    fields = {opts.pk.attname}
+    for ptr in opts.parents.values():
+        if ptr:
+            fields.add(ptr.attname)
+    for field in opts.concrete_fields:
+        if field.is_relation:
+            fields.add(field.attname)
+    return list(fields)
+
+
 class Collector:
     def __init__(self, using):
         self.using = using
@@ -234,7 +246,7 @@ class Collector:
         """
         return related.related_model._base_manager.using(self.using).filter(
             **{"%s__in" % related.field.name: objs}
-        )
+        ).only(*get_required_fields(related.related_model))
 
     def instances_with_model(self):
         for model, instances in self.data.items():
